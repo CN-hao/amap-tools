@@ -26,6 +26,12 @@ const initMap = (mapInstance) => {
     //map.on('dblclick', showPoint);
     map.on('rightclick',showPoint);
     map.add(polyline);
+    polyline.on('click', () => {
+        ElMessageBox.alert('点击折线，事件待处理', '提示', {
+            confirmButtonText: '确  定',
+            type: 'info'
+        });
+    });
 };
 
 const addWayPoint = e => {
@@ -115,10 +121,6 @@ watch(waypointsMarkers, (newMarkers) => {
 onMounted(()=>{
 })
 
-function handSelect(item) {
-  console.log(item);
-  // 空函数
-}
 </script>
 
 <template>
