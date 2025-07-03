@@ -1,20 +1,20 @@
 <script setup>
 import MyMap from '@/components/MyMap/index.vue';
 import { ElMessageBox } from 'element-plus';
-import { onMounted ,ref,reactive, watch} from 'vue';
+import { onMounted ,ref,reactive, watch } from 'vue';
 
 let waypointsMarkers=reactive([]); // 存储关键点的marker
 
 const showPointData = ref('');
 const polylineInfo=reactive({});
 
-watch(showPointData, (newValue) => {
-  if(showPointData.value === '') {
-    polylineInfo.length=0;
-  }else{
-    polylineInfo.length=polyline.getLength();
-  }
-}, { immediate: true });
+// watch(showPointData, (newValue) => {
+//   if(showPointData.value === '') {
+//     polylineInfo.length=0;
+//   }else{
+//     polylineInfo.length=polyline.getLength();
+//   }
+// }, { immediate: true });
 
 const polyline = new AMap.Polyline({
   isOutline: true,
@@ -69,16 +69,18 @@ const addWayPoint = e => {
         polyline.setPath(polyline.getPath().filter(item => item.toString() !== lnglat.toString())); // 从折线中移除
         waypointsMarkers.splice(waypointsMarkers.indexOf(marker), 1)
     });
-    marker.on('dragend', function(e) {
+  marker.on('dragend', function(e) {
       const position = marker.getPosition();
       polyline.setPath(polyline.getPath().map(item => {
             return item.toString() === lnglat.toString() ? position : item;
-      })); // 更新折线中的点 
+      }));
       lnglat[0] = position.lng;
       lnglat[1] = position.lat;
-      updateShowPointData();
+      // 强制更新waypointsMarkers引用 否则不触发watch监听事件
+      waypointsMarkers.push({});
+      waypointsMarkers.pop();
   });
-    waypointsMarkers.push(marker);
+    waypointsMarkers.push(reactive(marker));
     polyline.setPath([...(polyline.getPath() || []), lnglat]);
     polyline.show(); // 显示折线
 }
@@ -92,7 +94,7 @@ const handleGetMapLocation = info => {
     });
 }
 
-const showPoint=()=>{
+const showPoint=(e)=>{
   if (waypointsMarkers.length === 0) {
     ElMessageBox.alert('请先添加关键点', '提示', {
       confirmButtonText: '确  定',
@@ -125,7 +127,8 @@ const mapClear=()=>{
 
 watch(waypointsMarkers, (newMarkers) => {
   updateShowPointData();
-});
+  polylineInfo.length = polyline.getLength();
+}, { deep: true });
 
 const updateShowPointData = () => {
   showPointData.value = waypointsMarkers.map(marker => {
@@ -147,7 +150,6 @@ const drawPoint = () => {
   points.forEach(point => {
     const [lng, lat] = point.split(',').map(Number);
     if (!isNaN(lng) && !isNaN(lat)) {
-      console.log(`添加关键点：lng=${lng}, lat=${lat}`);
       addWayPoint({ lnglat: { lng, lat } });
     }
   });
