@@ -109,7 +109,11 @@ const resetPoint = () => {
     cancelButtonText: '取  消',
     type: 'warning'
   }).then(() => {
-    waypointsMarkers.forEach(marker => map.remove(marker));
+    mapClear();
+  });
+};
+const mapClear=()=>{
+  waypointsMarkers.forEach(marker => map.remove(marker));
     waypointsMarkers.length = 0; // 清空数组
     try{
       polyline.setPath([]); // 清空折线
@@ -117,8 +121,7 @@ const resetPoint = () => {
     }catch {
     }
     showPointData.value = '';
-  });
-};
+}
 
 watch(waypointsMarkers, (newMarkers) => {
   updateShowPointData();
@@ -129,6 +132,25 @@ const updateShowPointData = () => {
     const position = marker.getPosition();
     return `${position.lng},${position.lat};`;
   }).join('');
+};
+
+const drawPoint = () => {
+  if (showPointData.value === '') {
+    ElMessageBox.alert('请先填入经纬度', '提示', {
+      confirmButtonText: '确  定',
+      type: 'warning'
+    });
+    return;
+  }
+  const points = showPointData.value.split(';').filter(item => item.trim() !== '');
+  mapClear();
+  points.forEach(point => {
+    const [lng, lat] = point.split(',').map(Number);
+    if (!isNaN(lng) && !isNaN(lat)) {
+      console.log(`添加关键点：lng=${lng}, lat=${lat}`);
+      addWayPoint({ lnglat: { lng, lat } });
+    }
+  });
 };
 
 onMounted(()=>{
@@ -145,18 +167,21 @@ onMounted(()=>{
         :resize="false"
       >
           <el-row class="inner ">
-              <el-row :gutter="10">
-                <el-col :span="20">
+              <el-row  style="width: 100%;" :gutter="10">
+                <el-col :span="16">
                   <el-input 
                     v-model="showPointData"
-                    placeholder="请先选择关键点" 
-                    readonly/>
+                    placeholder="请先选择关键点或填入经纬度" 
+                    />
                 </el-col>
-                <el-col :span="3">
+                <el-col :span="4">
+                    <el-button @click="drawPoint">绘制</el-button>
+                </el-col>
+                <el-col :span="4">
                     <el-button @click="resetPoint">重置</el-button>
                 </el-col>
               </el-row>
-              <el-row  style="width: 100%;">
+              <el-row  style="width: 100%; margin-top: 10px;">
                   <el-card style="width: 100%;">
                       <template #header>
                           路线信息
@@ -178,7 +203,7 @@ body,
     position: absolute;
     left: 20px;
     top: 20px;
-    width: 300px;
+    width: 400px;
 
 }
 
