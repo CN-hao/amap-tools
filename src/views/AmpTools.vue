@@ -5,7 +5,16 @@ import { onMounted ,ref,reactive, watch} from 'vue';
 
 let waypointsMarkers=reactive([]); // 存储关键点的marker
 
-const showData = ref('');
+const showPointData = ref('');
+const polylineInfo=reactive({});
+
+watch(showPointData, (newValue) => {
+  if(showPointData.value === '') {
+    polylineInfo.length=0;
+  }else{
+    polylineInfo.length=polyline.getLength();
+  }
+}, { immediate: true });
 
 const polyline = new AMap.Polyline({
   isOutline: true,
@@ -17,6 +26,13 @@ const polyline = new AMap.Polyline({
   strokeStyle: 'solid',
   lineJoin: 'round' // 折线拐点连接处样式
 });
+polyline.on('click', () => {
+        const length= polyline.getLength();
+        ElMessageBox.alert(`路线总长${length}米`, '提示', {
+            confirmButtonText: '确  定',
+            type: 'info'
+        });
+    });
 
 
 let map = null
@@ -26,12 +42,7 @@ const initMap = (mapInstance) => {
     //map.on('dblclick', showPoint);
     map.on('rightclick',showPoint);
     map.add(polyline);
-    polyline.on('click', () => {
-        ElMessageBox.alert('点击折线，事件待处理', '提示', {
-            confirmButtonText: '确  定',
-            type: 'info'
-        });
-    });
+    
 };
 
 const addWayPoint = e => {
@@ -65,6 +76,7 @@ const addWayPoint = e => {
       })); // 更新折线中的点 
       lnglat[0] = position.lng;
       lnglat[1] = position.lat;
+      updateShowPointData();
   });
     waypointsMarkers.push(marker);
     polyline.setPath([...(polyline.getPath() || []), lnglat]);
@@ -88,10 +100,7 @@ const showPoint=()=>{
     });
     return;
   }
-  showData.value= waypointsMarkers.map(marker => {
-    const position = marker.getPosition();
-    return `${position.lng},${position.lat};`;
-  }).join('\n');
+  updateShowPointData();
 }
 
 const resetPoint = () => {
@@ -107,16 +116,20 @@ const resetPoint = () => {
       polyline.hide(); // 隐藏折线
     }catch {
     }
-    showData.value = '';
+    showPointData.value = '';
   });
 };
 
 watch(waypointsMarkers, (newMarkers) => {
-  showData.value = newMarkers.map(marker => {
+  updateShowPointData();
+});
+
+const updateShowPointData = () => {
+  showPointData.value = waypointsMarkers.map(marker => {
     const position = marker.getPosition();
     return `${position.lng},${position.lat};`;
-  }).join('\n');
-});
+  }).join('');
+};
 
 onMounted(()=>{
 })
@@ -124,7 +137,6 @@ onMounted(()=>{
 </script>
 
 <template>
-    <div >
       <MyMap class="main-container"
         @init="initMap"
         autoComplatePlaceholder="搜索关键词添加关键点"
@@ -132,23 +144,28 @@ onMounted(()=>{
         @select="handleGetMapLocation"
         :resize="false"
       >
-          <div class="inner">
-              <div>
+          <el-row class="inner ">
+              <el-row :gutter="10">
+                <el-col :span="20">
                   <el-input 
-                :rows="5"
-                :autosize="{ minRows: 5, maxRows: 10 }"
-                v-model="showData"
-                :show-word-limit="true" 
-                type="textarea"
-                placeholder="请先选择关键点" 
-                readonly/>
-              </div>
-              <div style="margin-top: 10px;">
-                  <el-button @click="resetPoint">重置</el-button>
-              </div>
-          </div>
+                    v-model="showPointData"
+                    placeholder="请先选择关键点" 
+                    readonly/>
+                </el-col>
+                <el-col :span="3">
+                    <el-button @click="resetPoint">重置</el-button>
+                </el-col>
+              </el-row>
+              <el-row  style="width: 100%;">
+                  <el-card style="width: 100%;">
+                      <template #header>
+                          路线信息
+                      </template>
+                      总长度：{{ polylineInfo.length||0 }} 米
+                  </el-card>
+              </el-row>
+          </el-row>
     </MyMap>
-    </div>
 </template>
 
 <style scoped>
