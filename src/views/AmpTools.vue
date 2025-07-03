@@ -59,8 +59,6 @@ const addWayPoint = e => {
       })); // 更新折线中的点 
       lnglat[0] = position.lng;
       lnglat[1] = position.lat;
-
-
   });
     waypointsMarkers.push(marker);
     polyline.setPath([...(polyline.getPath() || []), lnglat]);
@@ -68,7 +66,6 @@ const addWayPoint = e => {
 }
 const handleGetMapLocation = info => {
     const { location, name, address } = info;
-    console.log('获取到的位置信息:', location);
     const lnglat = [location.lng, location.lat]; // 获取经纬度
     addWayPoint({
         lnglat: location,
