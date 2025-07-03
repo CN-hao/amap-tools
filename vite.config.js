@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/amap-tools/', // 确保以斜杠开头和结尾
   plugins: [
     vue(),
     vueDevTools(),
