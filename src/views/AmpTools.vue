@@ -69,7 +69,7 @@ const addWayPoint = e => {
         polyline.setPath(polyline.getPath().filter(item => item.toString() !== lnglat.toString())); // 从折线中移除
         waypointsMarkers.splice(waypointsMarkers.indexOf(marker), 1)
     });
-  marker.on('dragend', function(e) {
+  marker.on('dragging', function(e) {
       const position = marker.getPosition();
       polyline.setPath(polyline.getPath().map(item => {
             return item.toString() === lnglat.toString() ? position : item;
